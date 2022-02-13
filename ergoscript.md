@@ -258,7 +258,6 @@ OUTPUTS(0).propositionBytes == userPaymentAddress
 OUTPUTS(0).propositionBytes == houseContract}
 sigmaProp(tokensValid && paymentProp)
 }
-
 ```
  
  
