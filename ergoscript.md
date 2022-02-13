@@ -118,15 +118,15 @@ OUTPUTS(1).tokens(1)._1 == lpId,
 OUTPUTS(1).tokens(1)._2 == contractTokensLP + tokenAmount,
 OUTPUTS(1).propositionBytes == SELF.propositionBytes))
 }
+sigmaProp(liquditySwap)
+```
+
  *Remarks*:
 
  - Similar to the swap contract, the user proposes the token amount to be swapped in R4 and the token type in R5 and once again cannot cheat the contract due to conservation of tokens
  - The sufficiently large amount of minted LPs is used to reference the number of circulating LPs and thus give an accurate pool share proportion
  - There will be only one UTXO that contains LP tokens. 
  - Division by 0 is impossible since a LP:OWL means there is always some circulating LP. 
-
-sigmaProp(liquditySwap)
-```
 All your files and folders are presented as a tree in the file explorer. You can switch from one to another by clicking a file in the tree.
 
 ## Rename a file
