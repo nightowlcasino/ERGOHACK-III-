@@ -130,129 +130,137 @@ sigmaProp(liquditySwap)
  - Division by 0 is impossible since a LP:OWL means there is always some circulating LP. 
 All your files and folders are presented as a tree in the file explorer. You can switch from one to another by clicking a file in the tree.
 
-## Rename a file
+## Custom Casino Games
+Night Owl allows for any game to be created and launched on the casino through community voting.  To Design the liquidity pool contract (hereafter referred to as the house contract) to be compatible with custom games we present the following design:
 
-You can rename the current file by clicking the file name in the navigation bar or by clicking the **Rename** button in the file explorer.
+The House Contract is used to match player bets on the casino. The spending of this contract needs to be controlled. 
+To allow any game to be developed on the platform the house contract's spending condition must be **customisable**.
+We have achieved this through the use of Game tokens. Every Game created on the platform will use the same game token. If a game token is present in a transaction, the house contracts funds can be spent. A game token is stored in a custom game contract that limits the spending of house contract funds as well as describing all the rules of the game (the creation of the contracts can be voted on by the community) If the conditions of a game token's guard box are met, a box is created that awaits a random number from the blockchain. Once this number has been generated, the winner of the game is calculated and paid accordingly.
 
-## Delete a file
+Full House Contract:
 
-You can delete the current file by clicking the **Remove** button in the file explorer. The file will be moved into the **Trash** folder and automatically deleted after 7 days of inactivity.
+```scala
+{ // FULL HOUSE CONTRACT
+// LIQUIDITY CONTRACT
+val contractTokensOwl = SELF.tokens(0)._2
+val contractTokensLP = SELF.tokens(1)._2
+val owlId = fromBase58("CqK3dmwgkK83qVnHrc8YLpm46t5aDLWNViwrhmtLqPeh")
+val lpId = fromBase58("B9XWSU56ob1S5JPrEHPE5PcWg2HE73AsFBPAYLXXWc7v")
+val maxLpValue = 1000000L
+val tokenAmount = OUTPUTS(0).R4[Long].get
+val tokenType = OUTPUTS(0).R5[Coll[Byte]].get
 
-## Export a file
+// OWL for LP
+val dualSwap = if (tokenType == owlId) { 
+allOf(Coll(
+OUTPUTS(0).tokens(0)._1 == lpId,
+OUTPUTS(0).tokens(0)._2 == tokenAmount,
+OUTPUTS(1).tokens(0)._1 == owlId,
+OUTPUTS(1).tokens(0)._2 == contractTokensOwl + tokenAmount,
+OUTPUTS(1).tokens(1)._1 == lpId,
+OUTPUTS(1).tokens(1)._2 == contractTokensLP - tokenAmount,
+OUTPUTS(1).propositionBytes == SELF.propositionBytes))
+} else {
+// swap LP for Owl
+allOf(Coll(
+tokenType == lpId,
+OUTPUTS(0).tokens(0)._1 == owlId,
+OUTPUTS(0).tokens(0)._2 == tokenAmount /(maxLpValue - contractTokensLP) * contractTokensOwl,
+OUTPUTS(1).tokens(0)._1 == owlId,
+OUTPUTS(1).tokens(0)._2 == contractTokensOwl - (tokenAmount /(maxLpValue - contractTokensLP) * contractTokensOwl),
+OUTPUTS(1).tokens(1)._1 == lpId,
+OUTPUTS(1).tokens(1)._2 == contractTokensLP + tokenAmount,
+OUTPUTS(1).propositionBytes == SELF.propositionBytes))
+}
 
-You can export the current file by clicking **Export to disk** in the menu. You can choose to export the file as plain Markdown, as HTML using a Handlebars template or as a PDF.
+// CASINO MATCH BET
+val gameNFT = fromBase58("CqK3dmwgkK83qVnHrc8YLpm46t5aDLWNViwrhmtLqPeh")
+val casinoBet = INPUTS(0).tokens(0)._1 == gameNFT
 
+val collectorChecks = allOf(Coll(
+OUTPUTS.size == 2,
+OUTPUTS(0).propositionBytes == SELF.propositionBytes))
+val minerGetOwls = OUTPUTS(1).tokens.exists({(t: (Coll[Byte], Long)) => t._1 == owlId})
+val minerGetLp = OUTPUTS(1).tokens.exists({(t: (Coll[Byte], Long)) => t._1 == lpId})
 
-# Synchronization
+val collector = collectorChecks && !(minerGetOwls || minerGetLp)
 
-Synchronization is one of the biggest features of StackEdit. It enables you to synchronize any file in your workspace with other files stored in your **Google Drive**, your **Dropbox** and your **GitHub** accounts. This allows you to keep writing on other devices, collaborate with people you share the file with, integrate easily into your workflow... The synchronization mechanism takes place every minute in the background, downloading, merging, and uploading file modifications.
+sigmaProp(dualSwap || casinoBet || collector)
+}```
 
-There are two types of synchronization and they can complement each other:
+ *Remarks*:
+ 
+ 
+ Example Game Design: Simplified Roulette
+ 
+ Roulette Game NFT guard box design:
+ ```scala 
+ // ROULETTE GAME NFT GUARD BOX
+{
+val gameNFT = fromBase58("Avp3dmwgkK83qVnHrc8YLpm46t5aDLWNViwrhmtLqPe2") // Token recognised by house contract
+val lpId = fromBase58("B9XWSU56ob1S5JPrEHPE5PcWg2HE73AsFBPAYLXXWc7v")
+val gameContract = fromBase64("abcdef") // Contract that describes the outcome of the game
+val miningAddress = fromBase64("abcdef") // Enter Mining Ergotree here
+val owlId = fromBase58("CqK3dmwgkK83qVnHrc8YLpm46t5aDLWNViwrhmtLqPeh")
+val houseContract = fromBase64("abcd") // House contract ErgoTree
+val betMultiplier = if(INPUTS(2).R4[Long].get == 2) {35} else {1} 
 
-- The workspace synchronization will sync all your files, folders and settings automatically. This will allow you to fetch your workspace on any other device.
-	> To start syncing your workspace, just sign in with Google in the menu.
+allOf(Coll(
+INPUTS.size == 3,
+INPUTS(0).propositionBytes == SELF.propositionBytes, 
+INPUTS(0).tokens(0)._1 == gameNFT,
+INPUTS(0).tokens(0)._2 == 1,
+INPUTS(1).tokens(0)._1 == owlId,
+INPUTS(1).tokens(1)._1 == lpId,
+INPUTS(1).propositionBytes == houseContract, // House Matching Bet
+INPUTS(2).propositionBytes != houseContract, // User Bet
+INPUTS(2).tokens(0)._1 == owlId,
+OUTPUTS.size == 4,
+OUTPUTS(0).propositionBytes == gameContract, 
+OUTPUTS(0).tokens(0)._1 == owlId,
+OUTPUTS(0).tokens(0)._2 == (betMultiplier + 1) * INPUTS(2).tokens(0)._2, // Stores all the Owl tokens
+OUTPUTS(0).R4[Long] == INPUTS(2).R4[Long], // Store User Guess (0 for red, 1 for black, 2 for green)
+OUTPUTS(0).R5[Coll[Byte]] == INPUTS(2).R5[Coll[Byte]], // Store User payout address
+OUTPUTS(1).propositionBytes == houseContract,
+OUTPUTS(1).tokens(0)._1 == owlId,
+OUTPUTS(1).tokens(1)._1 == lpId,
+OUTPUTS(1).tokens(0)._2 == INPUTS(1).tokens(0)._2 - betMultiplier * INPUTS(2).tokens(0)._2,
+OUTPUTS(1).tokens(1)._2 == INPUTS(1).tokens(1)._2,
+OUTPUTS(2).tokens(0)._1 == gameNFT, // Recycle Token
+OUTPUTS(2).tokens(0)._2 == 1,
+OUTPUTS(2).propositionBytes == SELF.propositionBytes,
+OUTPUTS(3).propositionBytes == miningAddress))
+}```
+ 
+ 
+ *Remarks*:
+ Spending Result Box design:
+ ```scala 
+ { // ROULETTE RESULT CONTRACT
+val index = HEIGHT - SELF.creationInfo._1 - 2
+val randomNumber = byteArrayToLong(CONTEXT.headers(index).id)
 
-- The file synchronization will keep one file of the workspace synced with one or multiple files in **Google Drive**, **Dropbox** or **GitHub**.
-	> Before starting to sync files, you must link an account in the **Synchronize** sub-menu.
+val miningAddress = fromBase64("abcdef") // Enter Mining Ergotree here
+val userGuess = SELF.R4[Long].get
+val userPaymentAddress = SELF.R5[Coll[Byte]].get
+val houseContract = fromBase64("abcd")
+val userWinDouble = randomNumber % 2 == userGuess && randomNumber % 37 != 0
+val userWinGreen = userGuess == 2 && randomNumber % 37 == 0
+val tokensValid = allOf(Coll(
+OUTPUTS.size == 2,
+OUTPUTS(0).tokens(0)._1 == fromBase58("CqK3dmwgkK83qVnHrc8YLpm46t5aDLWNViwrhmtLqPeh"),
+OUTPUTS(0).tokens(0)._2 == SELF.tokens(0)._2,
+OUTPUTS(1).propositionBytes == miningAddress))
 
-## Open a file
+val paymentProp = if(userWinDouble || userWinGreen) {
+OUTPUTS(0).propositionBytes == userPaymentAddress
+} else {
+OUTPUTS(0).propositionBytes == houseContract}
+sigmaProp(tokensValid && paymentProp)
+}
 
-You can open a file from **Google Drive**, **Dropbox** or **GitHub** by opening the **Synchronize** sub-menu and clicking **Open from**. Once opened in the workspace, any modification in the file will be automatically synced.
-
-## Save a file
-
-You can save any file of the workspace to **Google Drive**, **Dropbox** or **GitHub** by opening the **Synchronize** sub-menu and clicking **Save on**. Even if a file in the workspace is already synced, you can save it to another location. StackEdit can sync one file with multiple locations and accounts.
-
-## Synchronize a file
-
-Once your file is linked to a synchronized location, StackEdit will periodically synchronize it by downloading/uploading any modification. A merge will be performed if necessary and conflicts will be resolved.
-
-If you just have modified your file and you want to force syncing, click the **Synchronize now** button in the navigation bar.
-
-> **Note:** The **Synchronize now** button is disabled if you have no file to synchronize.
-
-## Manage file synchronization
-
-Since one file can be synced with multiple locations, you can list and manage synchronized locations by clicking **File synchronization** in the **Synchronize** sub-menu. This allows you to list and remove synchronized locations that are linked to your file.
-
-
-# Publication
-
-Publishing in StackEdit makes it simple for you to publish online your files. Once you're happy with a file, you can publish it to different hosting platforms like **Blogger**, **Dropbox**, **Gist**, **GitHub**, **Google Drive**, **WordPress** and **Zendesk**. With [Handlebars templates](http://handlebarsjs.com/), you have full control over what you export.
-
-> Before starting to publish, you must link an account in the **Publish** sub-menu.
-
-## Publish a File
-
-You can publish your file by opening the **Publish** sub-menu and by clicking **Publish to**. For some locations, you can choose between the following formats:
-
-- Markdown: publish the Markdown text on a website that can interpret it (**GitHub** for instance),
-- HTML: publish the file converted to HTML via a Handlebars template (on a blog for example).
-
-## Update a publication
-
-After publishing, StackEdit keeps your file linked to that publication which makes it easy for you to re-publish it. Once you have modified your file and you want to update your publication, click on the **Publish now** button in the navigation bar.
-
-> **Note:** The **Publish now** button is disabled if your file has not been published yet.
-
-## Manage file publication
-
-Since one file can be published to multiple locations, you can list and manage publish locations by clicking **File publication** in the **Publish** sub-menu. This allows you to list and remove publication locations that are linked to your file.
-
-
-# Markdown extensions
-
-StackEdit extends the standard Markdown syntax by adding extra **Markdown extensions**, providing you with some nice features.
-
-> **ProTip:** You can disable any **Markdown extension** in the **File properties** dialog.
-
-
-## SmartyPants
-
-SmartyPants converts ASCII punctuation characters into "smart" typographic punctuation HTML entities. For example:
-
-|                |ASCII                          |HTML                         |
-|----------------|-------------------------------|-----------------------------|
-|Single backticks|`'Isn't this fun?'`            |'Isn't this fun?'            |
-|Quotes          |`"Isn't this fun?"`            |"Isn't this fun?"            |
-|Dashes          |`-- is en-dash, --- is em-dash`|-- is en-dash, --- is em-dash|
-
-
-## KaTeX
-
-You can render LaTeX mathematical expressions using [KaTeX](https://khan.github.io/KaTeX/):
-
-The *Gamma function* satisfying $\Gamma(n) = (n-1)!\quad\forall n\in\mathbb N$ is via the Euler integral
-
-$$
-\Gamma(z) = \int_0^\infty t^{z-1}e^{-t}dt\,.
-$$
-
-> You can find more information about **LaTeX** mathematical expressions [here](http://meta.math.stackexchange.com/questions/5020/mathjax-basic-tutorial-and-quick-reference).
-
-
-## UML diagrams
-
-You can render UML diagrams using [Mermaid](https://mermaidjs.github.io/). For example, this will produce a sequence diagram:
-
-```mermaid
-sequenceDiagram
-Alice ->> Bob: Hello Bob, how are you?
-Bob-->>John: How about you John?
-Bob--x Alice: I am good thanks!
-Bob-x John: I am good thanks!
-Note right of John: Bob thinks a long<br/>long time, so long<br/>that the text does<br/>not fit on a row.
-
-Bob-->Alice: Checking with John...
-Alice->John: Yes... John, how are you?
 ```
-
-And this will produce a flow chart:
-
-```mermaid
-graph LR
-A[Square Rect] -- Link text --> B((Circle))
-A --> C(Round Rect)
-B --> D{Rhombus}
-C --> D
-```
+ 
+ 
+ *Remarks*:
+ 
