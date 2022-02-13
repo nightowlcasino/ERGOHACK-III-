@@ -119,6 +119,7 @@ OUTPUTS(1).tokens(1)._2 == contractTokensLP + tokenAmount,
 OUTPUTS(1).propositionBytes == SELF.propositionBytes))
 }
 sigmaProp(liquditySwap)
+}
 ```
 
  *Remarks*:
