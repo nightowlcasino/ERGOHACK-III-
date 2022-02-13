@@ -60,12 +60,7 @@ sigmaProp(swapContract)
 }
 ```
 
- *Remarks*:
 
- - Similar to the swap contract, the user proposes the token amount to be swapped in R4 and the token type in R5 and once again cannot cheat the contract due to conservation of tokens
- - The sufficiently large amount of minted LPs is used to reference the number of circulating LPs and thus give an accurate pool share proportion
- - There will be only one UTXO that contains LP tokens. 
- - Division by 0 is impossible since a LP:OWL means there is always some circulating LP. 
 
 ## Liquidity Pool
 The liquidity pool acts as the casino's source of capital or bank balance, if you like. Any user with OWLs can provide these tokens as liquidity. All winning bets in the casino are paid from the liquidity pool and a proportion of all losing bets and service fees (for player vs player games) are collected by the liquidity pool. The casino games are designed to produce capital for the pool over time, liquidity providers can capture this produced capital when they redeem their liquidity position. 
@@ -115,6 +110,12 @@ OUTPUTS(1).tokens(1)._1 == lpId,
 OUTPUTS(1).tokens(1)._2 == contractTokensLP + tokenAmount,
 OUTPUTS(1).propositionBytes == SELF.propositionBytes))
 }
+ *Remarks*:
+
+ - Similar to the swap contract, the user proposes the token amount to be swapped in R4 and the token type in R5 and once again cannot cheat the contract due to conservation of tokens
+ - The sufficiently large amount of minted LPs is used to reference the number of circulating LPs and thus give an accurate pool share proportion
+ - There will be only one UTXO that contains LP tokens. 
+ - Division by 0 is impossible since a LP:OWL means there is always some circulating LP. 
 
 sigmaProp(liquditySwap)
 ```
