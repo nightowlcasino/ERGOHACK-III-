@@ -261,6 +261,7 @@ OUTPUTS(3).propositionBytes == miningAddress))
  
  
  **The Roulette Result Contract Box** 
+ 
  The Roulette Result Contract Box containing the game info and both bets will be sent to a payout box containing the payout for the winner of the game.
  It generates a random number and checks with the modulo operator if the player's guess results in a win.
  If it does the payout box assigned to the player's payment address, if not it will be assigned to the House Contract address.
@@ -295,5 +296,6 @@ sigmaProp(tokensValid && paymentProp)
  *Remarks*:
  - The random number generation is used as for demonstration purposes only. More sophisticated RNG methods are required for more dynamic games. 
  
-  **Final Comments** 
+  **Final Comments**
+  
 It is important to notice that the house contract can only be spent if a game token is present as an INPUT. In the case of our roulette example this game token was guarded by a script that imposed spending limitations on the house contract, if these limitations were not present the house contract could be drained. So what about other game tokens? How are they guarded? At launch Night Owl will mint a sufficiently large number of game tokens and store them in a box which has a guard script that employs some community voting mechanism for its spending. The game tokens will only be sent to boxes guarded by a script which imposes strict limiations on the spending of house funds that allign with the game being delivered. In this way, the house contract can have custom spending paths based on the design of these game nft guard boxes!
