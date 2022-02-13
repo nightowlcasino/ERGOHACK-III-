@@ -139,7 +139,7 @@ To allow any game to be developed on the platform the house contract's spending 
 We have achieved this through the use of Game tokens. Every Game created on the platform will use the same game token. If a game token is present in a transaction, the house contracts funds can be spent. A game token is stored in a custom game contract that limits the spending of house contract funds as well as describing all the rules of the game. The creation of the contracts can be voted on by the community. 
 
 To the existing LP spending paths, the House Contracts will have two additional spending paths.
-- One that allows the House Contract to be spend in a Casino game to match a player's bet. 
+- One that allows the House Contract to be spent in a Casino game to match a player's bet. 
 This spending path checks if the transaction contains a box with the Game NFT.
 (see casinoBet)
 - A second spending path allows payout winnings of the House Contract to be collected to a single box. (see collector)
@@ -197,11 +197,10 @@ sigmaProp(dualSwap || casinoBet || collector)
 ```
 
  *Remarks*:
- We would suggest to build custom game contracts in at least two transactions. 
-- One that extracts the matching bet amount from the House Contract and returns the remaining tokens back to a single house contract box.
-- A second transaction to determine the outcome of the game.
-
-This way the House Contract, which acts as the Liquidity Pool can be accessed after one single block.
+- We would suggest to build custom game contracts in at least two transactions so that the House contract funds can be used immediately rather than wait for game result. 
+	- One transaction that extracts the matching bet amount from the House Contract and returns the remaining tokens back to a single house contract box.
+	- A second transaction to determine the outcome of the game.
+- Games will produce many boxes guarded by the house contract with minor amounts of OWL tokens. These boxes can be seen as shards of the larger main box. In order for a liqudity provider to receive the full rewards from all OWLs under the house contract guard box, collection should be performed before liqudity redemption. However, collection could be costly in terms of mining fees and computation and hence it is suggested liqudity redemption be issued through a periodic proxy contract that is called after a periodic collection (for example every 5 minutes)
  
  **Example Game Design: Simplified Roulette**
  
@@ -211,10 +210,10 @@ This way the House Contract, which acts as the Liquidity Pool can be accessed af
 
 In this Roulette game a player can only bet on the colors: red, black or green. The payout will be higher if a player wins with a green bet.
 
-The following contract is in the box, which stores the platform's game NFT. It defines the amount that is needed from the House Contract to match the player's bet. 
+The following contract a box which stores the platform's game NFT. It defines the amount that is needed from the House Contract to match the player's bet as well as payout paths to developers, marketing or bounty contracts (for simplicity this example does not consider these paths). 
 Besides the House Contract and this game NFT box, an additional player proxy contract is present at the input, which stores the player's bet in Owls, payment address and guess in the Roulette game.
 
-As one of the output of this transaction a Roulette Result box with the game info and the player's and House' bets is created. The Roulette Result Contract will determine the outcome of the game.
+As one of the outputs of this transaction is a Roulette Result box with the game info and the player's and House' bets is created. The Roulette Result Contract will determine the outcome of the game.
 The House Contract and the Roulette Game NFT box are also re-created by the transaction. 
 
  Roulette Game NFT guard box design:
@@ -260,7 +259,7 @@ OUTPUTS(3).propositionBytes == miningAddress))
  
  *Remarks*:
  
- The Roulette Result Contract Box with the game info and both bets will be spend to a payout box containing the payout for the winner of the game.
+ The Roulette Result Contract Box with the game info and both bets will be sent to a payout box containing the payout for the winner of the game.
  It generates a random number and checks with the modulo operator if the player's guess results in a win.
  If it does the payout box assigned to the player's payment address, if not it will be assigned to the House Contract address.
  
@@ -292,4 +291,5 @@ sigmaProp(tokensValid && paymentProp)
  
  
  *Remarks*:
+ - The random number generation is used as an example. More sophisticated RNG methods are required for more dynamic games. 
  
