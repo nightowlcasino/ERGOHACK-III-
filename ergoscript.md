@@ -16,7 +16,7 @@ The Night Owl Platform requires the following functionality:
 The swapping mechanism described in the requirements can be implemented in Ergoscript. 
 We propose the following design:
 
-At launch, Night Owl casino mints an arbitrarily large quantity of OWL tokens and stores them in a UTXO box. Users can interact with this box by providing sigUSD and obtaining released OWL tokens at a 1:1 ratio. The box should have a guard script that enforces the following behaviour:
+At launch, Night Owl casino mints an sufficiently large quantity of OWL tokens and stores them in a UTXO box. Users can interact with this box by providing sigUSD and obtaining released OWL tokens at a 1:1 ratio. The box should have a guard script that enforces the following behaviour:
 
  - The box is used as an input for a transaction alongside some other inputs containing x sigUSD or OWL. 
  - A new box will be created with the same guard script as our input box that contains:
@@ -62,11 +62,10 @@ sigmaProp(swapContract)
 
  *Remarks*:
 
- - The user must inform the script of their 'x' in R4, which represents the number of tokens they are offering for the swap. The user must also inform the script of the token type they are offering in R5. 
- - Notice that if the user attempts to deceive the contract by supplying a false R4 or R5 the INPUTS and OUTPUTS token quantity will not be equal and thus the transaction will be illegal.
- - The arbitarily large amount of minted OWLs must be so large that it is impossible for the contract to ever run out of OWLs. 
- - There is only one UTXO containing all the OWLs and held sigUSD.
- - OUTPUTS(0).propositionBytes is not defined and thus can be set as an ErgoMixer address to allow users to gamble with tokens that have been run through the mixer for additional privacy.
+ - Similar to the swap contract, the user proposes the token amount to be swapped in R4 and the token type in R5 and once again cannot cheat the contract due to conservation of tokens
+ - The sufficiently large amount of minted LPs is used to reference the number of circulating LPs and thus give an accurate pool share proportion
+ - There will be only one UTXO that contains LP tokens. 
+ - Division by 0 is impossible since a LP:OWL means there is always some circulating LP. 
 
 ## Liquidity Pool
 The liquidity pool acts as the casino's source of capital or bank balance, if you like. Any user with OWLs can provide these tokens as liquidity. All winning bets in the casino are paid from the liquidity pool and a proportion of all losing bets and service fees (for player vs player games) are collected by the liquidity pool. The casino games are designed to produce capital for the pool over time, liquidity providers can capture this produced capital when they redeem their liquidity position. 
@@ -84,7 +83,41 @@ A sufficiently large quantity of LP tokens are minted at the launch of Night Owl
 Formula for OWL  OWL tokens
 The contract describing this is as follow:
 
+```scala
+{ // LIQUIDITY CONTRACT
+val contractTokensOwl = SELF.tokens(0)._2
+val contractTokensLP = SELF.tokens(1)._2
+val owlId = fromBase58("CqK3dmwgkK83qVnHrc8YLpm46t5aDLWNViwrhmtLqPeh")
+val lpId = fromBase58("B9XWSU56ob1S5JPrEHPE5PcWg2HE73AsFBPAYLXXWc7v")
+val maxLpValue = 10000000000000000L // some sufficiently large value
+val tokenAmount = OUTPUTS(0).R4[Long].get
+val tokenType = OUTPUTS(0).R5[Coll[Byte]].get
 
+// OWL for LP
+val liquditySwap = if (tokenType == owlId) { 
+allOf(Coll(
+OUTPUTS(0).tokens(0)._1 == lpId,
+OUTPUTS(0).tokens(0)._2 == tokenAmount,
+OUTPUTS(1).tokens(0)._1 == owlId,
+OUTPUTS(1).tokens(0)._2 == contractTokensOwl + tokenAmount,
+OUTPUTS(1).tokens(1)._1 == lpId,
+OUTPUTS(1).tokens(1)._2 == contractTokensLP - tokenAmount,
+OUTPUTS(1).propositionBytes == SELF.propositionBytes))
+} else {
+// LP for Owl
+allOf(Coll(
+tokenType == lpId,
+OUTPUTS(0).tokens(0)._1 == owlId,
+OUTPUTS(0).tokens(0)._2 == tokenAmount /(maxLpValue - contractTokensLP) * contractTokensOwl,
+OUTPUTS(1).tokens(0)._1 == owlId,
+OUTPUTS(1).tokens(0)._2 == contractTokensOwl - (tokenAmount /(maxLpValue - contractTokensLP) * contractTokensOwl),
+OUTPUTS(1).tokens(1)._1 == lpId,
+OUTPUTS(1).tokens(1)._2 == contractTokensLP + tokenAmount,
+OUTPUTS(1).propositionBytes == SELF.propositionBytes))
+}
+
+sigmaProp(liquditySwap)
+```
 All your files and folders are presented as a tree in the file explorer. You can switch from one to another by clicking a file in the tree.
 
 ## Rename a file
