@@ -16,7 +16,7 @@ The Night Owl Platform requires the following functionality:
 The swapping mechanism described in the requirements can be implemented in Ergoscript. 
 We propose the following design:
 
-At launch, Night Owl casino mints an sufficiently large quantity of OWL tokens and stores them in a UTXO box. Users can interact with this box by providing sigUSD and obtaining released OWL tokens at a 1:1 ratio. The box should have a guard script that enforces the following behaviour:
+At launch, Night Owl casino mints a sufficiently large quantity of OWL tokens and stores them in a UTXO box. Users can interact with this box by providing sigUSD and obtaining released OWL tokens at a 1:1 ratio. The box should have a guard script that enforces the following behaviour:
 
  - The box is used as an input for a transaction alongside some other inputs containing x sigUSD or OWL. 
  - A new box will be created with the same guard script as our input box that contains:
@@ -83,7 +83,9 @@ We will leave discussion of this last point for the custom games section.
 We propose the following design:
 
 A sufficiently large quantity of LP tokens are minted at the launch of Night Owl. These tokens are stored in a box guarded by the liquidity pool contract. These LP tokens have no function or utility other than to act as a measure of a user's share in the liquidity pool. When a user provides OWL tokens to the pool they receive LP tokens in a 1:1 ratio. When a user redeems their LP tokens they receive:
-Formula for OWL  OWL tokens
+
+Users LP Tokens/Total LP Tokens sold * Total Owl Tokens in LP
+
 The contract describing this is as follow:
 
 ```scala
@@ -128,14 +130,19 @@ sigmaProp(liquditySwap)
  - The sufficiently large amount of minted LPs is used to reference the number of circulating LPs and thus give an accurate pool share proportion
  - There will be only one UTXO that contains LP tokens. 
  - Division by 0 is impossible since a LP:OWL means there is always some circulating LP. 
-All your files and folders are presented as a tree in the file explorer. You can switch from one to another by clicking a file in the tree.
 
 ## Custom Casino Games
 Night Owl allows for any game to be created and launched on the casino through community voting.  To Design the liquidity pool contract (hereafter referred to as the house contract) to be compatible with custom games we present the following design:
 
 The House Contract is used to match player bets on the casino. The spending of this contract needs to be controlled. 
 To allow any game to be developed on the platform the house contract's spending condition must be **customisable**.
-We have achieved this through the use of Game tokens. Every Game created on the platform will use the same game token. If a game token is present in a transaction, the house contracts funds can be spent. A game token is stored in a custom game contract that limits the spending of house contract funds as well as describing all the rules of the game (the creation of the contracts can be voted on by the community) If the conditions of a game token's guard box are met, a box is created that awaits a random number from the blockchain. Once this number has been generated, the winner of the game is calculated and paid accordingly.
+We have achieved this through the use of Game tokens. Every Game created on the platform will use the same game token. If a game token is present in a transaction, the house contracts funds can be spent. A game token is stored in a custom game contract that limits the spending of house contract funds as well as describing all the rules of the game. The creation of the contracts can be voted on by the community. 
+
+To the existing LP spending paths, the House Contracts will have two additional spending paths.
+- One that allows the House Contract to be spend in a Casino game to match a player's bet. 
+This spending path checks if the transaction contains a box with the Game NFT.
+(see casinoBet)
+- A second spending path allows payout winnings of the House Contract to be collected to a single box. (see collector)
 
 Full House Contract:
 
@@ -190,10 +197,26 @@ sigmaProp(dualSwap || casinoBet || collector)
 ```
 
  *Remarks*:
+ We would suggest to build custom game contracts in at least two transactions. 
+- One that extracts the matching bet amount from the House Contract and returns the remaining tokens back to a single house contract box.
+- A second transaction to determine the outcome of the game.
+
+This way the House Contract, which acts as the Liquidity Pool can be accessed after one single block.
  
+ **Example Game Design: Simplified Roulette**
  
- Example Game Design: Simplified Roulette
- 
+ A simplified Roulette game is designed to show how the platform's game NFT token can be implemented. As mentioned, the game will have two transactions. 
+ - Matching player's bet transaction
+ - Game Result transaction
+
+In this Roulette game a player can only bet on the colors: red, black or green. The payout will be higher if a player wins with a green bet.
+
+The following contract is in the box, which stores the platform's game NFT. It defines the amount that is needed from the House Contract to match the player's bet. 
+Besides the House Contract and this game NFT box, an additional player proxy contract is present at the input, which stores the player's bet in Owls, payment address and guess in the Roulette game.
+
+As one of the output of this transaction a Roulette Result box with the game info and the player's and House' bets is created. The Roulette Result Contract will determine the outcome of the game.
+The House Contract and the Roulette Game NFT box are also re-created by the transaction. 
+
  Roulette Game NFT guard box design:
  ```scala 
  // ROULETTE GAME NFT GUARD BOX
@@ -236,6 +259,11 @@ OUTPUTS(3).propositionBytes == miningAddress))
  
  
  *Remarks*:
+ 
+ The Roulette Result Contract Box with the game info and both bets will be spend to a payout box containing the payout for the winner of the game.
+ It generates a random number and checks with the modulo operator if the player's guess results in a win.
+ If it does the payout box assigned to the player's payment address, if not it will be assigned to the House Contract address.
+ 
  Spending Result Box design:
  ```scala 
  { // ROULETTE RESULT CONTRACT
