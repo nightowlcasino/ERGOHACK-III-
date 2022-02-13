@@ -186,7 +186,8 @@ val minerGetLp = OUTPUTS(1).tokens.exists({(t: (Coll[Byte], Long)) => t._1 == lp
 val collector = collectorChecks && !(minerGetOwls || minerGetLp)
 
 sigmaProp(dualSwap || casinoBet || collector)
-}```
+} 
+```
 
  *Remarks*:
  
@@ -230,7 +231,8 @@ OUTPUTS(2).tokens(0)._1 == gameNFT, // Recycle Token
 OUTPUTS(2).tokens(0)._2 == 1,
 OUTPUTS(2).propositionBytes == SELF.propositionBytes,
 OUTPUTS(3).propositionBytes == miningAddress))
-}```
+} 
+```
  
  
  *Remarks*:
