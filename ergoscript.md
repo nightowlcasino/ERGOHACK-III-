@@ -1,6 +1,6 @@
 # Night Owl Contract Design
 
-This document provides detailed description of the Ergoscript used to support the Night Owl Platform. 
+This document provides detailed description of the Ergoscript used to support the Night Owl Platform. Please note there are numerous references to proxy contracts which are not included in this document. 
 
 
 # Requirements
@@ -204,17 +204,17 @@ sigmaProp(dualSwap || casinoBet || collector)
  
  **Example Game Design: Simplified Roulette**
  
- A simplified Roulette game is designed to show how the platform's game NFT token can be implemented. As mentioned, the game will have two transactions. 
+ A simplified Roulette game is designed to show how the platform's game token can be implemented. As mentioned, the game will have two transactions. 
  - Matching player's bet transaction
  - Game Result transaction
 
 In this Roulette game a player can only bet on the colors: red, black or green. The payout will be higher if a player wins with a green bet.
 
-The following contract a box which stores the platform's game NFT. It defines the amount that is needed from the House Contract to match the player's bet as well as payout paths to developers, marketing or bounty contracts (for simplicity this example does not consider these paths). 
-Besides the House Contract and this game NFT box, an additional player proxy contract is present at the input, which stores the player's bet in Owls, payment address and guess in the Roulette game.
+The following contract is a box which stores a singular game token. It defines the amount that is needed from the House Contract to match the player's bet as well as payout paths to developers, marketing or bounty contracts (for simplicity this example does not consider these paths). 
+Besides the House Contract and this game token box, an additional player proxy contract is present as an input, which stores the player's bet in Owls, payment address and guess in the Roulette game (proxy contract used to standardise INPUTS size)
 
-As one of the outputs of this transaction is a Roulette Result box with the game info and the player's and House' bets is created. The Roulette Result Contract will determine the outcome of the game.
-The House Contract and the Roulette Game NFT box are also re-created by the transaction. 
+One of the outputs of this transaction is a Roulette Result box (guarded by a roulette result contract) with the game info and the player's and House' bets is created. The Roulette Result Contract will determine the outcome of the game.
+The House Contract and the Roulette Game token box are also re-created by the transaction. 
 
  Roulette Game NFT guard box design:
  ```scala 
@@ -254,12 +254,14 @@ OUTPUTS(2).tokens(0)._2 == 1,
 OUTPUTS(2).propositionBytes == SELF.propositionBytes,
 OUTPUTS(3).propositionBytes == miningAddress))
 } 
-```
- 
+``` 
  
  *Remarks*:
+ - Game token is recyled immediately for reuse
  
- The Roulette Result Contract Box with the game info and both bets will be sent to a payout box containing the payout for the winner of the game.
+ 
+ **The Roulette Result Contract Box** 
+ The Roulette Result Contract Box containing the game info and both bets will be sent to a payout box containing the payout for the winner of the game.
  It generates a random number and checks with the modulo operator if the player's guess results in a win.
  If it does the payout box assigned to the player's payment address, if not it will be assigned to the House Contract address.
  
@@ -291,5 +293,7 @@ sigmaProp(tokensValid && paymentProp)
  
  
  *Remarks*:
- - The random number generation is used as an example. More sophisticated RNG methods are required for more dynamic games. 
+ - The random number generation is used as for demonstration purposes only. More sophisticated RNG methods are required for more dynamic games. 
  
+  **Final Comments** 
+It is important to notice that the house contract can only be spent if a game token is present as an INPUT. In the case of our roulette example this game token was guarded by a script that imposed spending limitations on the house contract, if these limitations were not present the house contract could be drained. So what about other game tokens? How are they guarded? At launch Night Owl will mint a sufficiently large number of game tokens and store them in a box which has a guard script that employs some community voting mechanism for its spending. The game tokens will only be sent to boxes guarded by a script which imposes strict limiations on the spending of house funds that allign with the game being delivered. In this way, the house contract can have custom spending paths based on the design of these game nft guard boxes!
