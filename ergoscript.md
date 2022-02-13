@@ -60,6 +60,14 @@ sigmaProp(swapContract)
 }
 ```
 
+ *Remarks*:
+
+ - The user must inform the script of their 'x' in R4, which represents the number of tokens they are offering for the swap. The user must also inform the script of the token type they are offering in R5. 
+ - Notice that if the user attempts to deceive the contract by supplying a false R4 or R5 the INPUTS and OUTPUTS token quantity will not be equal and thus the transaction will be illegal.
+ - The arbitarily large amount of minted OWLs must be so large that it is impossible for the contract to ever run out of OWLs. 
+ - There is only one UTXO containing all the OWLs and held sigUSD.
+ - OUTPUTS(0).propositionBytes is not defined and thus can be set as an ErgoMixer address to allow users to gamble with tokens that have been run through the mixer for additional privacy.
+
 
 
 ## Liquidity Pool
