@@ -18,12 +18,53 @@ We propose the following design:
 
 At launch, Night Owl casino mints an arbitrarily large quantity of OWL tokens and stores them in a UTXO box. Users can interact with this box by providing sigUSD and obtaining released OWL tokens at a 1:1 ratio. The box should have a guard script that enforces the following behaviour:
 
- - The box is used as an input for a transaction alongside some other inputs containing x sigUSD. 
- - A new box will be created with the same guard script as our genesis box that contains:
-	 - Initial amount of OWLs - x
-	 - x sigUSD
+ - The box is used as an input for a transaction alongside some other inputs containing x sigUSD or OWL. 
+ - A new box will be created with the same guard script as our input box that contains:
+	 - Initial amount of OWLs +- x
+	 - Initial amount of sigUSD -+ x
 
- 
+The ErgoScript which achieves this is below:
+```scala
+{
+val contractTokensOwl = SELF.tokens(0)._2
+val contractTokensSigUSD = SELF.tokens(1)._2
+val owlId = fromBase58("CqK3dmwgkK83qVnHrc8YLpm46t5aDLWNViwrhmtLqPeh")
+val sigUsdId = fromBase58("B9XWSU56ob1S5JPrEHPE5PcWg2HE73AsFBPAYLXXWc7v")
+val tokenAmount = OUTPUTS(0).R4[Long].get
+val tokenType = OUTPUTS(0).R5[Coll[Byte]].get
+
+// Swap SigUSD for OWL
+val swapContract = if (tokenType == owlId) {        
+allOf(Coll(
+OUTPUTS(0).tokens(0)._1 == owlId,
+OUTPUTS(0).tokens(0)._2 == tokenAmount,
+OUTPUTS(1).tokens(0)._1 == owlId,
+OUTPUTS(1).tokens(0)._2 == contractTokensOwl - tokenAmount,
+OUTPUTS(1).tokens(1)._1 == sigUsdId,
+OUTPUTS(1).tokens(1)._2 == contractTokensSigUSD + tokenAmount,
+OUTPUTS(1).propositionBytes == SELF.propositionBytes))
+} else {
+// Swap OWL for SigUSD
+allOf(Coll(
+tokenType == sigUsdId,                      
+OUTPUTS(0).tokens(0)._1 == sigUsdId,
+OUTPUTS(0).tokens(0)._2 == tokenAmount,
+OUTPUTS(1).tokens(0)._1 == owlId,
+OUTPUTS(1).tokens(0)._2 == contractTokensOwl + tokenAmount,
+OUTPUTS(1).tokens(1)._1 == sigUsdId,
+OUTPUTS(1).tokens(1)._2 == contractTokensSigUSD - tokenAmount,
+OUTPUTS(1).propositionBytes == SELF.propositionBytes))
+}
+
+sigmaProp(swapContract)
+}
+```
+
+ *Remarks*:
+
+ - The user must inform the script of their 'x' in R4, which represents the number of tokens they are offering for the swap. The user must also inform the script of the token type they are offering in R5. 
+ - Notice that if the user attempts to deceive the contract by supplying a false R4 or R5 the INPUTS and OUTPUTS token quantity will not be equal and thus the transaction will be illegal.
+
 
 ## Switch to another file
 
