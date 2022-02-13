@@ -64,7 +64,7 @@ sigmaProp(swapContract)
 
  - The user must inform the script of their 'x' in R4, which represents the number of tokens they are offering for the swap. The user must also inform the script of the token type they are offering in R5. 
  - Notice that if the user attempts to deceive the contract by supplying a false R4 or R5 the INPUTS and OUTPUTS token quantity will not be equal and thus the transaction will be illegal.
- - The arbitarily large amount of minted OWLs must be so large that it is impossible for the contract to ever run out of OWLs. 
+ - The arbitrarily large amount of minted OWLs must be so large that it is impossible for the contract to ever run out of OWLs. 
  - There is only one UTXO containing all the OWLs and held sigUSD.
  - OUTPUTS(0).propositionBytes is not defined and thus can be set as an ErgoMixer address to allow users to gamble with tokens that have been run through the mixer for additional privacy.
 
@@ -129,7 +129,7 @@ sigmaProp(liquditySwap)
  - Similar to the swap contract, the user proposes the token amount to be swapped in R4 and the token type in R5 and once again cannot cheat the contract due to conservation of tokens
  - The sufficiently large amount of minted LPs is used to reference the number of circulating LPs and thus give an accurate pool share proportion
  - There will be only one UTXO that contains LP tokens. 
- - Division by 0 is impossible since a LP:OWL means there is always some circulating LP. 
+ - Division by 0 is impossible since a LP:OWL swap will always have some circulating LP. 
 
 ## Custom Casino Games
 Night Owl allows for any game to be created and launched on the casino through community voting.  To Design the liquidity pool contract (hereafter referred to as the house contract) to be compatible with custom games we present the following design:
@@ -200,7 +200,7 @@ sigmaProp(dualSwap || casinoBet || collector)
 - We would suggest to build custom game contracts in at least two transactions so that the House contract funds can be used immediately rather than wait for game result. 
 	- One transaction that extracts the matching bet amount from the House Contract and returns the remaining tokens back to a single house contract box.
 	- A second transaction to determine the outcome of the game.
-- Games will produce many boxes guarded by the house contract with minor amounts of OWL tokens. These boxes can be seen as shards of the larger main box. In order for a liqudity provider to receive the full rewards from all OWLs under the house contract guard box, collection should be performed before liqudity redemption. However, collection could be costly in terms of mining fees and computation and hence it is suggested liqudity redemption be issued through a periodic proxy contract that is called after a periodic collection (for example every 5 minutes)
+- Games will produce many boxes guarded by the house contract with minor amounts of OWL tokens. These boxes can be seen as shards of the larger main box. In order for a liqudity provider to receive the full rewards from all OWLs under the house contract guard box, collection should be performed before liqudity redemption. However, collection could be costly in terms of mining fees and computation and hence it is suggested liquidity redemption be issued through a periodic proxy contract that is called after a periodic collection (for example every 5 minutes)
  
  **Example Game Design: Simplified Roulette**
  
@@ -264,7 +264,7 @@ OUTPUTS(3).propositionBytes == miningAddress))
  
  The Roulette Result Contract Box containing the game info and both bets will be sent to a payout box containing the payout for the winner of the game.
  It generates a random number and checks with the modulo operator if the player's guess results in a win.
- If it does the payout box assigned to the player's payment address, if not it will be assigned to the House Contract address.
+ If it does the payout box is assigned to the player's payment address, if not it will be assigned to the House Contract address.
  
  Spending Result Box design:
  ```scala 
@@ -298,4 +298,4 @@ sigmaProp(tokensValid && paymentProp)
  
   **Final Comments**
   
-It is important to notice that the house contract can only be spent if a game token is present as an INPUT. In the case of our roulette example this game token was guarded by a script that imposed spending limitations on the house contract, if these limitations were not present the house contract could be drained. So what about other game tokens? How are they guarded? At launch Night Owl will mint a sufficiently large number of game tokens and store them in a box which has a guard script that employs some community voting mechanism for its spending (yet to be defined). The game tokens will only be sent to boxes guarded by a script which imposes strict limiations on the spending of house funds that allign with the game being delivered. In this way, the house contract can have custom spending paths based on the design of these game nft guard boxes!
+It is important to notice that the house contract can only be spent if a game token is present as an INPUT. In the case of our roulette example this game token was guarded by a script that imposed spending limitations on the house contract, if these limitations were not present the house contract could be drained. So what about other game tokens? How are they guarded? At launch Night Owl will mint a sufficiently large number of game tokens and store them in a box which has a guard script that employs some community voting mechanism for its spending (yet to be defined). The game tokens will only be sent to boxes guarded by a script which imposes strict limitations on the spending of house funds that align with the game being delivered. In this way, the house contract can have custom spending paths based on the design of these game nft guard boxes!
