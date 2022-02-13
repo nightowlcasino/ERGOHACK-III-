@@ -64,9 +64,26 @@ sigmaProp(swapContract)
 
  - The user must inform the script of their 'x' in R4, which represents the number of tokens they are offering for the swap. The user must also inform the script of the token type they are offering in R5. 
  - Notice that if the user attempts to deceive the contract by supplying a false R4 or R5 the INPUTS and OUTPUTS token quantity will not be equal and thus the transaction will be illegal.
+ - The arbitarily large amount of minted OWLs must be so large that it is impossible for the contract to ever run out of OWLs. 
+ - There is only one UTXO containing all the OWLs and held sigUSD.
+ - OUTPUTS(0).propositionBytes is not defined and thus can be set as an ErgoMixer address to allow users to gamble with tokens that have been run through the mixer for additional privacy.
 
+## Liquidity Pool
+The liquidity pool acts as the casino's source of capital or bank balance, if you like. Any user with OWLs can provide these tokens as liquidity. All winning bets in the casino are paid from the liquidity pool and a proportion of all losing bets and service fees (for player vs player games) are collected by the liquidity pool. The casino games are designed to produce capital for the pool over time, liquidity providers can capture this produced capital when they redeem their liquidity position. 
 
-## Switch to another file
+Thus, the liquidity pool requires the following functionality:
+
+ - Users can provide and redeem liquidity
+ - Redemption of liquidity should give the user their proportion of the tokens in the pool
+ - The pool's funds can be used to fund casino games
+ 
+We will leave discussion of this last point for the custom games section.
+We propose the following design:
+
+A sufficiently large quantity of LP tokens are minted at the launch of Night Owl. These tokens are stored in a box guarded by the liquidity pool contract. These LP tokens have no function or utility other than to act as a measure of a user's share in the liquidity pool. When a user provides OWL tokens to the pool they receive LP tokens in a 1:1 ratio. When a user redeems their LP tokens they receive:
+Formula for OWL  OWL tokens
+The contract describing this is as follow:
+
 
 All your files and folders are presented as a tree in the file explorer. You can switch from one to another by clicking a file in the tree.
 
