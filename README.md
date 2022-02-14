@@ -30,14 +30,12 @@ val contractTokensOwl = SELF.tokens(0)._2
 val contractTokensSigUSD = SELF.tokens(1)._2
 val owlId = fromBase58("CqK3dmwgkK83qVnHrc8YLpm46t5aDLWNViwrhmtLqPeh")
 val sigUsdId = fromBase58("B9XWSU56ob1S5JPrEHPE5PcWg2HE73AsFBPAYLXXWc7v")
-val tokenAmount = OUTPUTS(0).R4[Long].get
-val tokenType = OUTPUTS(0).R5[Coll[Byte]].get
+val tokenAmount = OUTPUTS(0).tokens(0)._2
+val tokenType = OUTPUTS(0).tokens(0)._1
 
 // Swap SigUSD for OWL
 val swapContract = if (tokenType == owlId) {        
 allOf(Coll(
-OUTPUTS(0).tokens(0)._1 == owlId,
-OUTPUTS(0).tokens(0)._2 == tokenAmount,
 OUTPUTS(1).tokens(0)._1 == owlId,
 OUTPUTS(1).tokens(0)._2 == contractTokensOwl - tokenAmount,
 OUTPUTS(1).tokens(1)._1 == sigUsdId,
@@ -47,8 +45,6 @@ OUTPUTS(1).propositionBytes == SELF.propositionBytes))
 // Swap OWL for SigUSD
 allOf(Coll(
 tokenType == sigUsdId,                      
-OUTPUTS(0).tokens(0)._1 == sigUsdId,
-OUTPUTS(0).tokens(0)._2 == tokenAmount,
 OUTPUTS(1).tokens(0)._1 == owlId,
 OUTPUTS(1).tokens(0)._2 == contractTokensOwl + tokenAmount,
 OUTPUTS(1).tokens(1)._1 == sigUsdId,
