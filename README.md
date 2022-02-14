@@ -64,6 +64,7 @@ sigmaProp(swapContract)
  - At genesis 1 sigUSD must be sent to to the contract so that SELF.tokens(1)._2 is defined. 
  - There is only one UTXO containing all the OWLs and held sigUSD.
  - OUTPUTS(0).propositionBytes is not defined and thus can be set as an ErgoMixer address to allow users to gamble with tokens that have been run through the mixer for additional privacy.
+ - This contract pegs 1 OWL to 1 US cent (presuming OWLS have no decimals), this may be changed so that OWLs can have some desired number of decimals.
 
 
 
