@@ -59,7 +59,7 @@ sigmaProp(swapContract)
  *Remarks*:
 
  - The tokenAmount and the tokenType is defined by the OUTPUT(0) created by the user.
- - Notice that if the user attempts to deceive the contract by creating OUTPUT(0) or even any other OUTPUT with more than the external INPUTS amount of tokens in its amount, conservation of tokens cannot hold and transaction will be illegal.
+ - Notice that if the user attempts to deceive the contract by creating OUTPUT(0) or even any other OUTPUT with more than the external INPUTS amount of tokens, the conservation of tokens cannot hold and transaction will be illegal.
  - The arbitrarily large amount of minted OWLs must be so large that it is impossible for the contract to ever run out of OWLs. 
  - There is only one UTXO containing all the OWLs and held sigUSD.
  - OUTPUTS(0).propositionBytes is not defined and thus can be set as an ErgoMixer address to allow users to gamble with tokens that have been run through the mixer for additional privacy.
