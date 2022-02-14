@@ -61,6 +61,7 @@ sigmaProp(swapContract)
  - The tokenAmount and the tokenType is defined by the OUTPUT(0) created by the user.
  - Notice that if the user attempts to deceive the contract by creating OUTPUT(0) or even any other OUTPUT with more than the external INPUTS amount of tokens, the conservation of tokens cannot hold and transaction will be illegal.
  - The arbitrarily large amount of minted OWLs must be so large that it is impossible for the contract to ever run out of OWLs. 
+ - At genesis 1 sigUSD must be sent to to the contract so that SELF.tokens(1)._2 is defined. 
  - There is only one UTXO containing all the OWLs and held sigUSD.
  - OUTPUTS(0).propositionBytes is not defined and thus can be set as an ErgoMixer address to allow users to gamble with tokens that have been run through the mixer for additional privacy.
 
@@ -125,6 +126,7 @@ sigmaProp(liquditySwap)
  - Similar to the swap contract, the user proposes the token amount to be swapped in R4 and the token type in R5 and once again cannot cheat the contract due to conservation of tokens
  - The sufficiently large amount of minted LPs is used to reference the number of circulating LPs and thus give an accurate pool share proportion
  - There will be only one UTXO that contains LP tokens. 
+ - At genesis 1 OWL must be sent to to the contract so that SELF.tokens(0)._2 is defined. 
  - Division by 0 is impossible since a LP:OWL swap will always have some circulating LP. 
 
 ## Custom Casino Games
